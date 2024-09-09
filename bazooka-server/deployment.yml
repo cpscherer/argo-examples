@@ -1,0 +1,550 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: bazooka-server
+  name: bazooka-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bazooka-server
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: bazooka-server
+      annotations:
+        prometheus.io/scrape_koeo: "true"
+        prometheus.io/path: "/api/monitor/prometheus"
+        prometheus.io/port: "9010"
+    spec:
+      hostAliases:
+        - ip: "10.152.183.25"
+          hostnames:
+            - "localkube.koeo.com"
+      initContainers:
+      containers:
+        - image: "964040897648.dkr.ecr.us-east-1.amazonaws.com/nox-cloud:bazooka-server-98.0.0"
+          imagePullPolicy: Always
+          name: bazooka-server
+          livenessProbe:
+            httpGet:
+              port: 9010
+              path: /api/monitor/info
+              scheme: HTTPS
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 24
+          readinessProbe:
+            httpGet:
+              port: 9010
+              path: /api/monitor/health
+              scheme: HTTPS
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            failureThreshold: 24
+          resources:
+            requests:
+              cpu: 100m
+              memory: 768Mi
+            limits:
+              memory: 768Mi
+          env:
+            - name: DOMAIN_QUALIFIER
+              value: localkube
+            - name: CONTAINER_JVM_MEM_OPTS
+              value: -XX:MaxRAMPercentage=75.0 -XX:+UseParallelGC -XX:+ExitOnOutOfMemoryError -XshowSettings:vm
+            - name: SPRING_PROFILES_ACTIVE
+              value: secure,contained,local
+            - name: RELEASE_VERSION
+              value: 98.0.0
+            - name: KOEO_ENABLE_DEBUG
+              value: "true"
+            - name: KOEO_ENABLE_JMX
+              value: "false"
+            - name: LOG4J_FORMAT_MSG_NO_LOOKUPS
+              value: "true"
+            - name: KOEO_HOME_DIR
+              valueFrom:
+                configMapKeyRef:
+                  name: koeo-server-config
+                  key: koeo-home-dir
+            - name: KOEO_LOG_DIR
+              valueFrom:
+                configMapKeyRef:
+                  name: koeo-server-config
+                  key: koeo-log-dir
+            - name: KOEO_SERVER_BASE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: koeo-server-config
+                  key: koeo-server-base-url
+            - name: KOEO_BACKEND_SERVER_BASE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: koeo-server-config
+                  key: koeo-backend-server-base-url
+            - name: KOEO_SERVER_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: koeo-server-config
+                  key: koeo-server-host
+            - name: KOEO_SERVER_PROTOCOL
+              valueFrom:
+                configMapKeyRef:
+                  name: koeo-server-config
+                  key: koeo-server-protocol
+            - name: DYNAMIC_LINKS_ENABLED
+              valueFrom:
+                configMapKeyRef:
+                  name: koeo-server-config
+                  key: dynamic-links-enabled
+            - name: DYNAMIC_LINKS_API_KEY
+              valueFrom:
+                configMapKeyRef:
+                  name: koeo-server-config
+                  key: dynamic-links-api-key
+            - name: DYNAMIC_LINKS_SHORT_LINK_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: koeo-server-config
+                  key: dynamic-links-short-link-url
+            - name: DYNAMIC_LINKS_ANDROID_PACKAGE_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: koeo-server-config
+                  key: dynamic-links-android-package-name
+            - name: DYNAMIC_LINKS_IOS_APP_STORE_ID
+              valueFrom:
+                configMapKeyRef:
+                  name: koeo-server-config
+                  key: dynamic-links-ios-app-store-id
+            - name: DYNAMIC_LINKS_IOS_BUNDLE_ID
+              valueFrom:
+                configMapKeyRef:
+                  name: koeo-server-config
+                  key: dynamic-links-ios-bundle-id
+            - name: DYNAMIC_LINKS_DOMAIN_URIS_REGISTER
+              valueFrom:
+                configMapKeyRef:
+                  name: koeo-server-config
+                  key:  dynamic-links-domain-uris-register
+            - name: DYNAMIC_LINKS_DOMAIN_URIS_RESET_PASSWORD
+              valueFrom:
+                configMapKeyRef:
+                  name: koeo-server-config
+                  key: dynamic-links-domain-uris-reset-password
+            - name: DYNAMIC_LINKS_DOMAIN_URIS_SSO
+              valueFrom:
+                configMapKeyRef:
+                  name: koeo-server-config
+                  key: dynamic-links-domain-uris-sso
+            - name: MONGODB_AUTH_DATABASE
+              valueFrom:
+                configMapKeyRef:
+                  name: koeo-server-config
+                  key: mongodb-auth-database
+            - name: MONGODB_DEPLOY_USER_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: koeo-server-config
+                  key: mongodb-deploy-user-name
+            - name: MONGODB_DEPLOY_USER_PASSWORD
+              valueFrom:
+                configMapKeyRef:
+                  name: koeo-server-config
+                  key: mongodb-deploy-user-password
+            - name: MONGODB_LEGACY_USER_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: koeo-server-config
+                  key: mongodb-legacy-user-name
+            - name: MONGODB_LEGACY_USER_PASSWORD
+              valueFrom:
+                configMapKeyRef:
+                  name: koeo-server-config
+                  key: mongodb-legacy-user-password
+            - name: MONGODB_SECURITY_GUEST_CODES
+              valueFrom:
+                configMapKeyRef:
+                  name: security-config
+                  key: mongodb-security-guest-codes
+            - name: MONGODB_SERVERS
+              valueFrom:
+                configMapKeyRef:
+                  name: koeo-server-config
+                  key: mongodb-servers
+            - name: MONGODB_SSL_ENABLED
+              valueFrom:
+                configMapKeyRef:
+                  name: koeo-server-config
+                  key: mongodb-ssl-enabled
+            - name: MONGODB_SSL_INVALID_HOSTNAME_ALLOWED
+              valueFrom:
+                configMapKeyRef:
+                  name: koeo-server-config
+                  key: mongodb-ssl-invalid-hostname-allowed
+            - name: POSTGRESQL_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: koeo-server-config
+                  key: postgresql-host
+            - name: POSTGRESQL_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: koeo-server-config
+                  key: postgresql-port
+            - name: POSTGRESQL_USER_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: koeo-server-config
+                  key: postgresql-user-name
+            - name: POSTGRESQL_USER_PASSWORD
+              valueFrom:
+                configMapKeyRef:
+                  name: koeo-server-config
+                  key: postgresql-user-password
+            - name: POSTGRESQL_DB_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: koeo-server-config
+                  key: postgresql-db-name
+            - name: POSTGRESQL_USE_SSL
+              valueFrom:
+                configMapKeyRef:
+                  name: koeo-server-config
+                  key: postgresql-use-ssl
+            - name: RABBITMQ_ENABLED
+              valueFrom:
+                configMapKeyRef:
+                  name: koeo-server-config
+                  key: rabbitmq-enabled
+            - name: RABBITMQ_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: koeo-server-config
+                  key: rabbitmq-host
+            - name: RABBITMQ_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: koeo-server-config
+                  key: rabbitmq-port
+            - name: RABBITMQ_PROTOCOL
+              valueFrom:
+                configMapKeyRef:
+                  name: koeo-server-config
+                  key: rabbitmq-protocol
+            - name: RABBITMQ_USER_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: koeo-server-config
+                  key: rabbitmq-user-name
+            - name: RABBITMQ_USER_PASSWORD
+              valueFrom:
+                configMapKeyRef:
+                  name: koeo-server-config
+                  key: rabbitmq-user-password
+            - name: RABBITMQ_VIRTUAL_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: koeo-server-config
+                  key: rabbitmq-virtual-host
+            - name: SECURITY_AUTH_SESSION_TIMEOUT
+              valueFrom:
+                configMapKeyRef:
+                  name: security-config
+                  key: security-auth-session-timeout
+            - name: NOXTURNAL_AUTH_SESSION_TIMEOUT
+              valueFrom:
+                configMapKeyRef:
+                  name: security-config
+                  key: noxturnal-auth-session-timeout
+            - name: SECURITY_CONFIGURATION_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: security-config
+                  key: security-configuration-url
+            - name: SECURITY_ENCRYPTION_ENABLED
+              valueFrom:
+                configMapKeyRef:
+                  name: security-config
+                  key: security-encryption-enabled
+            - name: SECURITY_MONGODB_DATABASE
+              valueFrom:
+                configMapKeyRef:
+                  name: security-config
+                  key: security-mongodb-database
+            - name: SECURITY_POSTGRESQL_CONNECTION_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: security-config
+                  key: security-postgresql-connection-url
+            - name: SERVER_TO_SERVER_AUTHENTICATION_KEY
+              valueFrom:
+                configMapKeyRef:
+                  name: koeo-server-config
+                  key: server-to-server-authentication-key
+            - name: SERVER_TO_SERVER_IPS_ALLOWED
+              valueFrom:
+                configMapKeyRef:
+                  name: koeo-server-config
+                  key: server-to-server-ips-allowed
+            - name: SERVICE_SYSTEM_USER_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: koeo-server-config
+                  key: service-system-user-name
+            - name: SERVICE_SYSTEM_USER_PASSWORD
+              valueFrom:
+                configMapKeyRef:
+                  name: koeo-server-config
+                  key: service-system-user-password
+            - name: TIMBER_SERVER_MONGODB_DATABASE
+              valueFrom:
+                configMapKeyRef:
+                  name: timber-server-config
+                  key: timber-server-mongodb-database
+
+            - name: VAULT_INITIAL_TOKEN
+              valueFrom:
+                configMapKeyRef:
+                  name: koeo-server-config
+                  key: vault-initial-token
+            - name: VAULT_TOKEN
+              valueFrom:
+                configMapKeyRef:
+                  name: koeo-server-config
+                  key: vault-initial-token
+            - name: VAULT_TRANSIT_KEY_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: koeo-server-config
+                  key: vault-transit-key-name
+            - name: VAULT_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: koeo-server-config
+                  key: vault-url
+            - name: RECORDING_CLOUD_SERVER_AUTHENTICATION_KEY
+              valueFrom:
+                configMapKeyRef:
+                  name: koeo-server-config
+                  key: recording-cloud-server-authentication-key
+            - name: FLAGSMITH_BACKEND_API_KEY
+              valueFrom:
+                configMapKeyRef:
+                  name: koeo-server-config
+                  key: flagsmith-backend-api-key
+            - name: FLAGSMITH_BACKEND_API_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: koeo-server-config
+                  key: flagsmith-backend-api-url
+            - name: FLAGSMITH_BACKEND_API_CACHE
+              valueFrom:
+                configMapKeyRef:
+                  name: koeo-server-config
+                  key: flagsmith-backend-api-cache
+            - name: FLAGSMITH_WEB_API_KEY
+              valueFrom:
+                configMapKeyRef:
+                  name: koeo-server-config
+                  key: flagsmith-web-api-key
+            - name: FLAGSMITH_WEB_API_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: koeo-server-config
+                  key: flagsmith-web-api-url
+            - name: FLAGSMITH_WEB_API_CACHE
+              valueFrom:
+                configMapKeyRef:
+                  name: koeo-server-config
+                  key: flagsmith-web-api-cache
+            - name: FLAGSMITH_MOBILE_API_KEY
+              valueFrom:
+                configMapKeyRef:
+                  name: koeo-server-config
+                  key: flagsmith-mobile-api-key
+            - name: FLAGSMITH_MOBILE_API_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: koeo-server-config
+                  key: flagsmith-mobile-api-url
+            - name: FLAGSMITH_MOBILE_API_CACHE
+              valueFrom:
+                configMapKeyRef:
+                  name: koeo-server-config
+                  key: flagsmith-mobile-api-cache
+            - name: FLAGSMITH_STUDIO_API_KEY
+              valueFrom:
+                configMapKeyRef:
+                  name: koeo-server-config
+                  key: flagsmith-studio-api-key
+            - name: FLAGSMITH_STUDIO_API_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: koeo-server-config
+                  key: flagsmith-studio-api-url
+            - name: FLAGSMITH_STUDIO_API_CACHE
+              valueFrom:
+                configMapKeyRef:
+                  name: koeo-server-config
+                  key: flagsmith-studio-api-cache
+            - name: ORY_CLIENT_SECRET_NOX_CLOUD_BACKEND
+              valueFrom:
+                configMapKeyRef:
+                  name: koeo-server-config
+                  key: ory-client-secret-nox-cloud-backend
+            - name: CENTRAL_LOGIN_LOGIN_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: koeo-server-config
+                  key: central_login_login_url
+            - name: CENTRAL_LOGIN_LOGOUT_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: koeo-server-config
+                  key: central_login_logout_url
+            - name: CENTRAL_LOGIN_SCOPE
+              valueFrom:
+                configMapKeyRef:
+                  name: koeo-server-config
+                  key: central_login_scope
+            - name: CENTRAL_LOGIN_REDIRECT_URI
+              valueFrom:
+                configMapKeyRef:
+                  name: koeo-server-config
+                  key: central_login_redirect_uri
+            - name: BAZOOKA_SERVER_MONGODB_DATABASE
+              valueFrom:
+                configMapKeyRef:
+                  name: bazooka-server-config
+                  key: bazooka-server-mongodb-database
+            - name: COMMUNICATION_EXECUTOR_TIMEOUT
+              valueFrom:
+                configMapKeyRef:
+                  name: koeo-server-config
+                  key: communication-executor-timeout
+            - name: COMMUNICATION_THREADPOOL_SIZE
+              valueFrom:
+                configMapKeyRef:
+                  name: koeo-server-config
+                  key: communication-threadpool-size
+            - name: FAX_API_KEY
+              valueFrom:
+                configMapKeyRef:
+                  name: koeo-server-config
+                  key: fax-api-key
+            - name: FAX_API_SECRET
+              valueFrom:
+                configMapKeyRef:
+                  name: koeo-server-config
+                  key: fax-api-secret
+            - name: EMAIL_CONFIGURATION_SET
+              valueFrom:
+                configMapKeyRef:
+                  name: koeo-server-config
+                  key: email-configuration-set
+            - name: KOEO_CERTS_SHARE_DIR
+              valueFrom:
+                configMapKeyRef:
+                  name: koeo-server-config
+                  key: koeo-certs-share-dir
+            - name: KOEO_CONFIGURATION_DOMAIN
+              valueFrom:
+                configMapKeyRef:
+                  name: koeo-server-config
+                  key: koeo-configuration-domain
+            - name: TOMCAT_REV
+              valueFrom:
+                configMapKeyRef:
+                  name: bazooka-server-config
+                  key: tomcat-rev
+          volumeMounts:
+            - name: secure-config
+              # TODO - Don\'t use /root folder for properties file. Move away from @PropertySource to load properties
+              mountPath: /root/etc/security/CustomConfig.properties
+              subPath: CustomConfig.properties
+            - name: timber-config
+              mountPath: /root/etc/timber-server/CustomConfig.properties
+              subPath: CustomConfig.properties
+            - name: billing-config
+              mountPath: /root/etc/billing-client/CustomConfig.properties
+              subPath: CustomConfig.properties
+            - name: document-config
+              mountPath: /root/etc/document-client/CustomConfig.properties
+              subPath: CustomConfig.properties
+            - name: timeline-config
+              mountPath: /root/etc/timeline-client/CustomConfig.properties
+              subPath: CustomConfig.properties
+            - name: xcomm-config
+              mountPath: /root/etc/xcomm-client/CustomConfig.properties
+              subPath: CustomConfig.properties
+            - name: custom-config
+              mountPath: /root/etc/bazooka-server/CustomConfig.properties
+              subPath: CustomConfig.properties
+            ### Tomcat specific (begin) ###
+            # - name: secure-secret
+            #   mountPath: /usr/local/ssl/aws.rds.der
+            #   subPath: aws.rds.der
+            ### Tomcat specific (end) ###
+            ### Spring Boot specific (begin) ###
+            # double cert
+            - name: secure-secret
+              mountPath: /etc/ssl/certs/koeo.com.p12
+              subPath: koeo.com.p12
+              readOnly: true
+            - name: secure-secret
+              mountPath: /etc/ssl/certs/koeo.com.crt
+              subPath: koeo.com.crt
+            - name: secure-secret
+              mountPath: /etc/ssl/certs/koeo.com.key
+              subPath: koeo.com.key
+            # RDS cert
+            - name: secure-secret
+              mountPath: /etc/ssl/certs/aws.rds.der
+              subPath: aws.rds.der
+            # Nox Recording Server
+            #- name: secure-secret
+            #  mountPath: /etc/ssl/certs/nox.recording.crt
+            #  subPath: nox.recording.crt
+            # FusionSleep enterprise cert
+            - name: secure-secret
+              mountPath: /etc/ssl/certs/api.koeo.com.crt
+              subPath: api.koeo.com.crt
+            - name: secure-secret
+              mountPath: /etc/ssl/certs/api.koeo.com.key
+              subPath: api.koeo.com.key
+            ### Spring Boot specific (end) ###
+      nodeSelector:
+        kubernetes.io/os: linux
+        kubernetes.io/arch: amd64
+      volumes:
+        - name: secure-secret
+          secret:
+            secretName: secure-custom-secret
+        - name: secure-config
+          configMap:
+            name: secure-custom-config
+        - name: timber-config
+          configMap:
+            name: timber-custom-config
+        - name: billing-config
+          configMap:
+            name: billing-client-config
+        - name: document-config
+          configMap:
+            name: document-client-config
+        - name: timeline-config
+          configMap:
+            name: timeline-client-config
+        - name: xcomm-config
+          configMap:
+            name: xcomm-client-config
+        - name: custom-config
+          configMap:
+            name: bazooka-custom-config
+      imagePullSecrets:
+        - name: nox-registry
+
