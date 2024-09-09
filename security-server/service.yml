@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: security-server
+  name: security-server
+spec:
+  ports:
+    - name: tls-common
+      port: 443
+      protocol: TCP
+      targetPort: 9008
+  selector:
+    app: security-server
+  type: ClusterIP
